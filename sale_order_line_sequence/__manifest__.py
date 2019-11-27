@@ -19,6 +19,7 @@
     "depends": [
         "sale",
     ],
-    'post_init_hook': 'post_init_hook',
     "installable": True,
+    "external_dependencies": {"python": ["openupgradelib"]},
+    "pre_init_hook": "pre_init_hook",
 }
