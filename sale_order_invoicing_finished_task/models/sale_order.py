@@ -50,7 +50,6 @@ class SaleOrderLine(models.Model):
             lines.update({"qty_to_invoice": 0.0})
         super(SaleOrderLine, self - lines)._get_to_invoice_qty()
 
-    @api.multi
     def _timesheet_compute_delivered_quantity_domain(self):
         vals = super()._timesheet_compute_delivered_quantity_domain()
         vals = (

@@ -32,13 +32,11 @@ class ProjectTask(models.Model):
         )
         tasks.toggle_invoiceable()
 
-    @api.multi
     def toggle_invoiceable(self):
         self._check_sale_line_state()
         for task in self:
             task.invoiceable = not task.invoiceable
 
-    @api.multi
     def write(self, vals):
         if "sale_line_id" in vals:
             self._check_sale_line_state(vals["sale_line_id"])

@@ -24,9 +24,7 @@ class TestInvoicefinishedTask(common.SavepointCase):
         cls.employee = cls.env["hr.employee"].create(
             {"name": cls.manager.name, "user_id": cls.manager.id}
         )
-        cls.partner = cls.env["res.partner"].create(
-            {"name": "Customer - test", "customer": True}
-        )
+        cls.partner = cls.env["res.partner"].create({"name": "Customer - test"})
         cls.project = cls.env["project.project"].create({"name": "Some test project"})
         cls.stage_new = cls.env["project.task.type"].create(cls._prepare_stage_vals())
         cls.stage_invoiceable = cls.env["project.task.type"].create(
@@ -128,7 +126,7 @@ class TestInvoicefinishedTask(common.SavepointCase):
         self.assertEqual(self.sale_order.invoice_status, "to invoice")
 
         # Make the invoice
-        self.sale_order.action_invoice_create()
+        self.sale_order._create_invoices()
 
         # Click on toggle_invoiceable method after the so is invoiced
         with self.assertRaises(ValidationError):
