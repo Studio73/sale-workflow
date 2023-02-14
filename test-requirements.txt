@@ -1,0 +1,2 @@
+odoo_test_helper
+odoo-addon-sale_order_general_discount_triple @ git+https://github.com/OCA/sale-workflow.git@refs/pull/2358/head#subdirectory=setup/sale_order_general_discount_triple
