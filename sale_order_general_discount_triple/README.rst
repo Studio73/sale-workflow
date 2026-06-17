@@ -70,7 +70,7 @@ Changelog
 14.0.1.0.0
 ----------
 
--  Initial release
+- Initial release
 
 Bug Tracker
 ===========
@@ -94,9 +94,9 @@ Authors
 Contributors
 ------------
 
--  `Ooops <https://www.ooops404.com>`__:
+- `Ooops <https://www.ooops404.com>`__:
 
-   -  Ashish Hirpara
+  - Ashish Hirpara
 
 Maintainers
 -----------

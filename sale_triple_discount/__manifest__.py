@@ -13,7 +13,11 @@
     "website": "https://github.com/OCA/sale-workflow",
     "license": "AGPL-3",
     "summary": "Manage triple discount on sale order lines",
-    "depends": ["sale", "account_invoice_triple_discount"],
+    "depends": [
+        "sale",
+        "account_invoice_triple_discount",
+        "sm_product_assortment",
+    ],
     "data": ["views/sale_order_report.xml", "views/sale_order_view.xml"],
     "installable": True,
     "post_init_hook": "post_init_hook",
