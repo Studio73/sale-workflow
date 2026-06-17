@@ -2,68 +2,94 @@
 <odoo>
     <template
         id="report_saleorder_document_triple_discount"
-        inherit_id="sale.report_saleorder_document"
+        inherit_id="sm_product_assortment.report_saleorder_document_inh_sm_product_assortment"
     >
-        <xpath expr="//t[@t-set='display_discount']" position="after">
+        <xpath expr="//table[hasclass('o_main_table')]" position="before">
             <t t-set="display_discount" t-value="False" />
             <t
                 t-set="display_discount1"
-                t-value="any([l.discount1 for l in doc.order_line])"
+                t-value="any(l.discount1 for l in doc.order_line)"
             />
             <t
                 t-set="display_discount2"
-                t-value="any([l.discount2 for l in doc.order_line])"
+                t-value="any(l.discount2 for l in doc.order_line)"
             />
             <t
                 t-set="display_discount3"
-                t-value="any([l.discount3 for l in doc.order_line])"
+                t-value="any(l.discount3 for l in doc.order_line)"
             />
         </xpath>
-        <xpath expr="//table/thead/tr/th[@name='th_discount']" position="before">
-            <th
+        <xpath
+            expr="//table[hasclass('o_main_table')]/thead/tr/td[normalize-space(.)='Pares']"
+            position="after"
+        >
+            <td
                 t-if="display_discount1"
-                class="text-right"
+                class="text-center"
                 groups="sale.group_discount_per_so_line"
             >
-                <span>Disc. 1 (%)</span>
-            </th>
-            <th
+                Disc. 1 (%)
+            </td>
+            <td
                 t-if="display_discount2"
-                class="text-right"
+                class="text-center"
                 groups="sale.group_discount_per_so_line"
             >
-                <span>Disc. 2 (%)</span>
-            </th>
-            <th
+                Disc. 2 (%)
+            </td>
+            <td
                 t-if="display_discount3"
-                class="text-right"
+                class="text-center"
                 groups="sale.group_discount_per_so_line"
             >
-                <span>Disc. 3 (%)</span>
-            </th>
+                Disc. 3 (%)
+            </td>
         </xpath>
-        <xpath expr="//table/tbody//tr//td[@t-if='display_discount']" position="before">
+        <xpath
+            expr="//table[hasclass('o_main_table')]/tbody/t[@t-foreach='report_rows']/tr/td[span[@t-esc=&quot;row['pairs']&quot;]]"
+            position="after"
+        >
             <td
                 t-if="display_discount1"
-                class="text-right"
+                class="text-center"
                 groups="sale.group_discount_per_so_line"
             >
-                <span t-field="line.discount1" />
+                <span t-esc="row.get('discount1', 0)" />
             </td>
             <td
                 t-if="display_discount2"
-                class="text-right"
+                class="text-center"
                 groups="sale.group_discount_per_so_line"
             >
-                <span t-field="line.discount2" />
+                <span t-esc="row.get('discount2', 0)" />
             </td>
             <td
                 t-if="display_discount3"
-                class="text-right"
+                class="text-center"
                 groups="sale.group_discount_per_so_line"
             >
-                <span t-field="line.discount3" />
+                <span t-esc="row.get('discount3', 0)" />
             </td>
+        </xpath>
+        <xpath
+            expr="//table[hasclass('o_main_table')]/tbody/tr[contains(@style, 'font-size: 12px')]/td[.//span[@t-esc='par_total']]"
+            position="after"
+        >
+            <td
+                t-if="display_discount1"
+                style="border-top: 2px solid black;"
+                groups="sale.group_discount_per_so_line"
+            />
+            <td
+                t-if="display_discount2"
+                style="border-top: 2px solid black;"
+                groups="sale.group_discount_per_so_line"
+            />
+            <td
+                t-if="display_discount3"
+                style="border-top: 2px solid black;"
+                groups="sale.group_discount_per_so_line"
+            />
         </xpath>
     </template>
 </odoo>
