@@ -16,9 +16,8 @@
     "depends": [
         "sale",
         "account_invoice_triple_discount",
-        "sm_product_assortment",
     ],
-    "data": ["views/sale_order_report.xml", "views/sale_order_view.xml"],
+    "data": ["views/sale_order_view.xml"],
     "installable": True,
     "post_init_hook": "post_init_hook",
 }
