@@ -49,9 +49,22 @@ class SaleOrder(models.Model):
         "account_payment_ids.move_id.line_ids.credit",
         "account_payment_ids.move_id.line_ids.currency_id",
         "account_payment_ids.move_id.line_ids.amount_currency",
+        "account_payment_ids.move_id.line_ids.amount_residual",
+        "account_payment_ids.move_id.line_ids.amount_residual_currency",
         "invoice_ids.amount_residual",
+        "invoice_ids.amount_total",
+        "invoice_ids.state",
+        "invoice_ids.move_type",
+        "invoice_ids.currency_id",
+        "invoice_ids.invoice_date",
+        "invoice_ids.date",
+        "invoice_ids.invoice_line_ids.price_total",
+        "invoice_ids.invoice_line_ids.sale_line_ids.order_id",
+        "invoice_ids.invoice_line_ids.sale_line_ids.price_total",
+        "invoice_ids.invoice_line_ids.sale_line_ids.currency_id",
     )
     def _compute_advance_payment(self):
+        invoice_allocations = {}
         for order in self:
             mls = order.account_payment_ids.mapped("move_id.line_ids").filtered(
                 lambda x: x.account_id.account_type == "asset_receivable"
@@ -81,7 +94,9 @@ class SaleOrder(models.Model):
             # Consider payments in related invoices.
             invoice_paid_amount = 0.0
             for inv in order.invoice_ids.filtered(lambda m: m.state == "posted"):
-                paid = inv.amount_total - inv.amount_residual
+                if inv.id not in invoice_allocations:
+                    invoice_allocations[inv.id] = self._allocate_invoice_payment(inv)
+                paid = invoice_allocations[inv.id].get(order.id, 0.0)
                 if inv.move_type == "out_refund":
                     paid = -paid
                 if inv.currency_id != order.currency_id:
@@ -106,6 +121,66 @@ class SaleOrder(models.Model):
             order.payment_line_ids = mls
             order.amount_residual = amount_residual
             order.advance_payment_status = payment_state
+
+    def _allocate_invoice_payment(self, invoice):
+        """Allocate a payment proportionally to invoice lines and sales orders.
+
+        Invoice lines without a sales order retain their own share. When a line
+        refers to several orders, their sales-line totals are the available
+        weights; the actual intended split is not recorded on the invoice.
+        """
+        currency = invoice.currency_id
+        if currency.is_zero(invoice.amount_total):
+            return {}
+
+        amounts_by_order = {}
+        for line in invoice.invoice_line_ids:
+            weights = {}
+            for sale_line in line.sale_line_ids:
+                amount = abs(sale_line.price_total)
+                if sale_line.currency_id != currency:
+                    amount = sale_line.currency_id._convert(
+                        amount,
+                        currency,
+                        invoice.company_id,
+                        invoice.invoice_date or invoice.date or fields.Date.today(),
+                        round=False,
+                    )
+                order_id = sale_line.order_id.id
+                weights[order_id] = weights.get(order_id, 0.0) + amount
+            if not weights:
+                continue
+            total_weight = sum(weights.values())
+            if currency.is_zero(total_weight):
+                weights = dict.fromkeys(weights, 1.0)
+                total_weight = len(weights)
+            for order_id, weight in weights.items():
+                amounts_by_order[order_id] = amounts_by_order.get(order_id, 0.0) + (
+                    line.price_total * weight / total_weight
+                )
+
+        # Keep unlinked lines and any difference in the invoice total separate,
+        # so their payment is not assigned to the linked orders.
+        unassigned = invoice.amount_total - sum(amounts_by_order.values())
+        buckets = dict(amounts_by_order)
+        if not currency.is_zero(unassigned):
+            buckets[None] = unassigned
+        if not buckets:
+            return {}
+
+        paid = invoice.amount_total - invoice.amount_residual
+        allocations = {
+            order_id: currency.round(paid * amount / invoice.amount_total)
+            for order_id, amount in buckets.items()
+        }
+        # Assign rounding differences deterministically, including unlinked
+        # amounts, so allocated cents add up to the payment on this invoice.
+        difference = currency.round(paid - sum(allocations.values()))
+        if not currency.is_zero(difference):
+            target = min(buckets, key=lambda key: (-abs(buckets[key]), key or 0))
+            allocations[target] = currency.round(allocations[target] + difference)
+        allocations.pop(None, None)
+        return allocations
 
     def _has_to_be_paid(self):
         # If an order 'has to be paid' it will show the "Accept & Pay" button in the
